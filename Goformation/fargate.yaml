@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: The cloudformation template for Codepipeline
+Parameters:
+  ConatinerPort:
+    Default: 8000
+    Type: Number
+  GithubBranch:
+    Default: main
+    Type: String
+  GithubOAuthToken:
+    Default: ""
+    Type: String
+  GithubRepo:
+    Default: Fargate-Codepipeline
+    Type: String
+  GithubUserName:
+    Default: Pavan0604
+    Type: String
+  Stage:
+    Default: dev
+    Type: String
+Resources:
+  BuildProject:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+        - Name: ECR_REPOSITORY_URI
+          Value:
+            Fn::Join:
+            - .
+            - - Ref: AWS::AccountId
+              - dkr.ecr
+              - Ref: AWS::Region
+              - Fn::Join:
+                - /
+                - - amazonaws.com
+                  - Ref: ECRRepository
+        Image: aws/codebuild/standard:2.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      Name:
+        Fn::Join:
+        - '-'
+        - - Ref: Stage
+          - Ref: AWS::AccountId
+          - BuildProject
+      ServiceRole:
+        Ref: CodeBuildExecutionRole
+      Source:
+        BuildSpec: buildspec.yml
+        Type: CODEPIPELINE
+    Type: AWS::CodeBuild::Project
+  CloudformationExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: cloudformation.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+    Type: AWS::IAM::Role
+  CodeBuildExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+    Type: AWS::IAM::Role
+  CodePipeLine:
+    DependsOn:
+    - S3Bucket
+    Properties:
+      ArtifactStore:
+        Location:
+          Fn::Join:
+          - '-'
+          - - Ref: Stage
+            - Ref: AWS::AccountId
+            - S3Bucket
+        Type: S3
+      Name:
+        Fn::Join:
+        - '-'
+        - - Ref: Stage
+          - Ref: AWS::AccountId
+          - CodePipeLine
+      RestartExecutionOnUpdate: false
+      RoleArn:
+        Fn::GetAtt:
+        - CodePipeLineExecutionRole
+        - Arn
+      Stages:
+      - Actions:
+        - ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Provider: Github
+            Version: "1"
+          Name: Source
+          OutputArtifacts:
+          - Name: source-output-artifacts
+          RunOrder: 1
+        Name: Source
+    Type: AWS::CodePipeline::Pipeline
+  CodePipeLineExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+    Type: AWS::IAM::Role
+  ECRRepository:
+    Properties:
+      RepositoryName:
+        Fn::Join:
+        - '-'
+        - - Ref: Stage
+          - Ref: AWS::AccountId
+          - ecr-repository
+    Type: AWS::ECR::Repository
+  S3Bucket:
+    Properties:
+      BucketName:
+        Fn::Join:
+        - '-'
+        - - Ref: Stage
+          - Ref: AWS::AccountId
+          - s3bucket
+    Type: AWS::S3::Bucket
