@@ -1,0 +1,9 @@
+version: 0.0
+Resources:
+  - TargetService:
+    Type: AWS::ECS::Service 
+  Properties:
+    TaskDefinition: arn:aws:ecs:ap-south-1:450637087891:task-definition/node-application-defn:1
+  LoadBalancerInfo: 
+    ContainerName: node-app-container
+    ContainerPort: 5000

@@ -1,0 +1,24 @@
+{
+    "executionRoleArn": "arn:aws:iam::450637087891:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "Node-app-with-deployment",
+            "image": "450637087891.dkr.ecr.ap-south-1.amazonaws.com/node-application:1.0.0",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": 5000,
+                    "protocol": "tcp",
+                    "containerPort": 5000
+                }
+            ]
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "family": "ecs-demo"
+}

@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 450637087891.dkr.ecr.ap-south-1.amazonaws.com/node-application:1.0.0
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...          
+      - docker build -t node-application:1.0.0 .
+      - docker tag node-application:1.0.0 450637087891.dkr.ecr.ap-south-1.amazonaws.com/node-application:1.0.0      
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push 450637087891.dkr.ecr.ap-south-1.amazonaws.com/node-application:1.0.0
+artifacts:
+  files:
+    - appspec.yml
